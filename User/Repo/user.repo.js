@@ -17,7 +17,7 @@ exports.updateOTP = async (id, otp, otpExpiry) => {
   return await User.findByIdAndUpdate(
     id,
     { otp, otpExpiry },
-    { new: true }
+    { returnDocument: "after" } // ✅ FIXED
   );
 };
 
@@ -30,7 +30,7 @@ exports.findById = async (id) => {
 exports.verifyUser = async (id) => {
   return await User.findByIdAndUpdate(
     id,
-    { isVerified: true, otp: null },
-    { new: true }
+    { isVerified: true, otp: null ,otpExpiry: null},
+    { returnDocument: "after" }
   );
 };

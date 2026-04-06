@@ -1,39 +1,119 @@
 const repo = require("../Repo/user.repo");
 const bcrypt = require("bcrypt");
+const { transporter } = require("../../Config/Config");
 
-// 🔢 OTP generator
+// 🔢 Generate OTP
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+// 📧 Send Email
+const sendOTPEmail = async (email, otp) => {
+  try {
+    const info = await transporter.sendMail({
+      from: `"OT TRACKER MGMNT SYSTEM" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Your OTP Code - OT Management System",
+
+      text: `Your OTP is ${otp}`, // ✅ fallback (important)
+
+      html: `
+      <div style="margin:0;padding:0;background-color:#f4f4f4;font-family:Arial, sans-serif;">
+        <table align="center" width="100%" style="max-width:600px;background:#ffffff;border-radius:10px;overflow:hidden;">
+          
+          <!-- HEADER -->
+          <tr>
+            <td style="background:#000000;padding:20px;text-align:center;">
+              <h1 style="color:#FFD700;margin:0;">OT MANAGEMENT</h1>
+              <p style="color:#cccccc;margin:5px 0 0;">Secure Verification</p>
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="padding:30px;text-align:center;">
+              <h2 style="color:#333;">OTP Verification</h2>
+              <p style="color:#555;font-size:16px;">
+                Use the following One-Time Password to complete your verification.
+              </p>
+
+              <!-- OTP BOX -->
+              <div style="
+                display:inline-block;
+                margin:20px 0;
+                padding:15px 30px;
+                font-size:28px;
+                letter-spacing:5px;
+                background:#000000;
+                color:#FFD700;
+                border-radius:8px;
+                font-weight:bold;
+              ">
+                ${otp}
+              </div>
+
+              <p style="color:#777;font-size:14px;">
+                This OTP is valid for <b>5 minutes</b>.
+              </p>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background:#f1f1f1;padding:20px;text-align:center;">
+              <p style="color:#888;font-size:12px;margin:0;">
+                If you did not request this, please ignore this email.
+              </p>
+              <p style="color:#aaa;font-size:11px;margin-top:5px;">
+                © 2026 OT Management System
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </div>
+      `
+    });
+
+    console.log("📧 Email sent:", info.response);
+
+  } catch (error) {
+    console.log("❌ Email error:", error);
+    throw error;
+  }
 };
 
 // 🚀 REGISTER USER
 exports.registerUser = async (data) => {
   const { email, employeeId, mobile, password } = data;
 
-  // 🔍 Check existing user
   const existing = await repo.findExistingUser(
     email,
     employeeId,
     mobile
   );
 
-  // ❌ Already verified user
+  // ❌ Already verified
   if (existing && existing.isVerified) {
     throw new Error("User already registered. Please login.");
   }
 
-  // 🔁 Exists but not verified → resend OTP
+  // 🔁 Resend OTP
   if (existing && !existing.isVerified) {
     const otp = generateOTP();
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
 
     await repo.updateOTP(existing._id, otp, otpExpiry);
 
-    console.log("🔁 Resent OTP:", otp);
+    try {
+      await sendOTPEmail(existing.email, otp);
+    } catch (error) {
+      throw new Error("Failed to send OTP email");
+    }
 
     return {
       _id: existing._id,
-      message: "OTP resent"
+      message: "OTP resent to email"
     };
   }
 
@@ -50,7 +130,11 @@ exports.registerUser = async (data) => {
     otpExpiry
   });
 
-  console.log("🆕 OTP:", otp);
+  try {
+    await sendOTPEmail(email, otp);
+  } catch (error) {
+    throw new Error("Failed to send OTP email");
+  }
 
   return user;
 };
@@ -61,7 +145,7 @@ exports.verifyOTP = async (userId, otpInput) => {
 
   if (!user) throw new Error("User not found");
 
-  if (user.otp !== otpInput) {
+  if (user.otp !== String(otpInput)) {
     throw new Error("Invalid OTP");
   }
 
