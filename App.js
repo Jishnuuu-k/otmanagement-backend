@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const {connectDB} = require("./Config/Config");
 const userRoutes = require("./User/Routes/user.route");
+const attendanceRoutes = require("./User/Routes/attendence.route");
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 
 // routes
 app.use("/api/user", userRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 // server
 app.listen(5000, () => {
