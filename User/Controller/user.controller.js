@@ -18,6 +18,26 @@ exports.register = async (req, res) => {
   }
 };
 
+// 🔐 LOGIN
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const data = await usecase.loginUser(email, password);
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      data
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // ✅ Verify OTP
 exports.verifyOTP = async (req, res) => {
   try {

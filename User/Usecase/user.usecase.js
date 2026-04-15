@@ -162,6 +162,43 @@ const getTodayDate = () => {
   return new Date().toISOString().split("T")[0];
 };
 
+const jwt = require("jsonwebtoken");
+
+// 🔐 LOGIN USER
+exports.loginUser = async (email, password) => {
+  const user = await repo.findExistingUser(email, null, null);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (!user.isVerified) {
+    throw new Error("Please verify your account first");
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    throw new Error("Invalid credentials");
+  }
+
+  // 🎟️ Generate Token
+  const token = jwt.sign(
+    { id: user._id },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  return {
+    token,
+    user: {
+      id: user._id,
+      fullName: user.fullName,
+      email: user.email
+    }
+  };
+};
+
 // 🟢 PUNCH IN
 exports.punchIn = async (userId) => {
   const today = getTodayDate();
