@@ -16,7 +16,7 @@ app.use(express.json());
 
 // routes
 app.use("/api/user", userRoutes);
-// app.use("/api/attendance", attendanceRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 // server
 app.listen(5000, () => {

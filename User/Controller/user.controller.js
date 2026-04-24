@@ -57,3 +57,69 @@ exports.verifyOTP = async (req, res) => {
     });
   }
 };
+
+// 🟢 PUNCH IN
+exports.punchIn = async (req, res) => {
+  try {
+    const data = await usecase.punchIn(req.userId);
+
+    res.json({
+      success: true,
+      message: "Punched in successfully",
+      data
+    });
+  } catch (error) {
+    res.status(400).json({
+      error: error.message
+    });
+  }
+};
+
+// 🔴 PUNCH OUT
+exports.punchOut = async (req, res) => {
+  try {
+    const data = await usecase.punchOut(req.userId);
+
+    res.json({
+      success: true,
+      message: "Punched out successfully",
+      data
+    });
+  } catch (error) {
+    res.status(400).json({
+      error: error.message
+    });
+  }
+};
+
+// 📊 MONTHLY OT
+exports.calculateOT = async (req, res) => {
+  try {
+    const data = await usecase.calculateMonthlyOT(req.userId);
+
+    res.json({
+      success: true,
+      ...data
+    });
+  } catch (error) {
+    res.status(400).json({
+      error: error.message
+    });
+  }
+};
+
+// 📚 ALL RECORDS
+exports.getAllRecords = async (req, res) => {
+  try {
+    const records = await usecase.getAllRecords(req.userId);
+
+    res.json({
+      success: true,
+      records
+    });
+  } catch (error) {
+    res.status(400).json({
+      error: error.message
+    });
+  }
+};
